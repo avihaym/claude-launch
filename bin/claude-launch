@@ -1,0 +1,195 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BASE_DIR="$(dirname "$SCRIPT_DIR")"
+
+COMMANDS_FILE="${CLAUDE_LAUNCH_COMMANDS:-$BASE_DIR/commands.txt}"
+USER_COMMANDS_FILE="${CLAUDE_LAUNCH_USER_COMMANDS:-$HOME/.claude-launch.txt}"
+
+usage() {
+  cat <<'EOF'
+claude-launch — fuzzy launcher for Claude Code
+
+Usage:
+  claude-launch [query]      Interactive picker (prints selected command)
+  claude-launch work         Pre-filter picker with "work"
+  claude-launch --execute    Pick and run immediately
+  claude-launch --copy       Pick and copy to clipboard
+  claude-launch --help       Show this help
+
+Environment:
+  CLAUDE_LAUNCH_COMMANDS       Path to custom commands.txt
+  CLAUDE_LAUNCH_USER_COMMANDS  Path to user overrides (default: ~/.claude-launch.txt)
+
+In the picker:
+  Enter     Confirm selection
+  Tab       Multi-select flags to compose a command
+  Esc       Cancel
+EOF
+  exit 0
+}
+
+trim() {
+  local var="$1"
+  var="${var#"${var%%[![:space:]]*}"}"
+  var="${var%"${var##*[![:space:]]}"}"
+  echo "$var"
+}
+
+check_fzf() {
+  if ! command -v fzf &>/dev/null; then
+    echo "claude-launch requires fzf but it's not installed." >&2
+    echo "" >&2
+    echo "Install it:" >&2
+    echo "  macOS:   brew install fzf" >&2
+    echo "  Linux:   sudo apt install fzf  (or your package manager)" >&2
+    echo "  Other:   https://github.com/junegunn/fzf#installation" >&2
+    exit 1
+  fi
+}
+
+load_commands() {
+  local file="$1"
+  [[ -f "$file" ]] || return 0
+  { grep -vE '^#|^[[:space:]]*$' "$file" || true; } | while IFS='|' read -r label desc cmd type; do
+    label="$(trim "$label")"
+    desc="$(trim "$desc")"
+    cmd="$(trim "$cmd")"
+    type="$(trim "$type")"
+    printf "%-42s %-40s │ %-50s │ %s\n" "$label" "$desc" "$cmd" "$type"
+  done
+}
+
+build_command() {
+  local selections="$1"
+  local has_preset=false
+  local preset_cmd=""
+  local flags=()
+
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    local cmd type
+    local raw_cmd raw_type
+    IFS='│' read -r _ raw_cmd raw_type <<< "$line"
+    cmd="$(trim "$raw_cmd")"
+    type="$(trim "$raw_type")"
+
+    if [[ "$type" == "preset" ]]; then
+      if [[ "$has_preset" == true ]]; then
+        echo "Warning: multiple presets selected, using first one" >&2
+      else
+        has_preset=true
+        preset_cmd="$cmd"
+      fi
+    else
+      flags+=("$cmd")
+    fi
+  done <<< "$selections"
+
+  if [[ "$has_preset" == true ]]; then
+    if [[ ${#flags[@]} -gt 0 ]]; then
+      echo "Warning: flags ignored when a preset is selected" >&2
+    fi
+    echo "$preset_cmd"
+  elif [[ ${#flags[@]} -gt 0 ]]; then
+    echo "claude ${flags[*]}"
+  else
+    return 1
+  fi
+}
+
+copy_to_clipboard() {
+  local text="$1"
+  if command -v pbcopy &>/dev/null; then
+    echo -n "$text" | pbcopy
+  elif command -v xclip &>/dev/null; then
+    echo -n "$text" | xclip -selection clipboard
+  elif command -v xsel &>/dev/null; then
+    echo -n "$text" | xsel --clipboard --input
+  elif command -v wl-copy &>/dev/null; then
+    echo -n "$text" | wl-copy
+  else
+    echo "No clipboard tool found (pbcopy, xclip, xsel, wl-copy)" >&2
+    return 1
+  fi
+}
+
+main() {
+  local mode="print"
+  local query=""
+  local output_file=""
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --execute|-e) mode="execute" ;;
+      --copy|-c)    mode="copy" ;;
+      --help|-h)    usage ;;
+      --output|-o)
+        if [[ -z "${2:-}" ]]; then
+          echo "Missing value for --output" >&2
+          exit 1
+        fi
+        output_file="$2"; shift ;;
+      --*)
+        echo "Unknown option: $1" >&2
+        echo "Run 'claude-launch --help' for usage." >&2
+        exit 1
+        ;;
+      *) query="$1" ;;
+    esac
+    shift
+  done
+
+  check_fzf
+
+  local all_commands
+  all_commands="$(
+    load_commands "$COMMANDS_FILE"
+    load_commands "$USER_COMMANDS_FILE"
+  )"
+
+  if [[ -z "$all_commands" ]]; then
+    echo "No commands found. Check $COMMANDS_FILE" >&2
+    exit 1
+  fi
+
+  local selections
+  selections="$(echo "$all_commands" | fzf \
+    --multi \
+    --ansi \
+    --reverse \
+    --delimiter='│' \
+    --with-nth=1 \
+    --header="Tab: multi-select │ Enter: confirm │ Esc: cancel" \
+    --prompt="claude> " \
+    --preview-window=hidden \
+    --query="$query" \
+  )" || exit 0
+
+  local cmd
+  cmd="$(build_command "$selections")" || {
+    echo "No command selected" >&2
+    exit 1
+  }
+
+  if [[ -n "$output_file" ]]; then
+    echo "$cmd" > "$output_file"
+  else
+    case "$mode" in
+      execute)
+        echo "→ $cmd" >&2
+        eval "$cmd"
+        ;;
+      copy)
+        copy_to_clipboard "$cmd"
+        echo "Copied: $cmd" >&2
+        ;;
+      print)
+        echo "$cmd"
+        ;;
+    esac
+  fi
+}
+
+main "$@"

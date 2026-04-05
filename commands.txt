@@ -1,0 +1,104 @@
+# ╔══════════════════════════════════════════════════════════════════════╗
+# ║  claude-launch — default commands                                    ║
+# ║  Format: label | description | command-or-flags | type               ║
+# ║  Types: preset (full command), flag (composable via multi-select)    ║
+# ║  Lines starting with # are ignored                                   ║
+# ╚══════════════════════════════════════════════════════════════════════╝
+
+# ── Most used ────────────────────────────────────────────────
+
+claude               | Start a new interactive session       | claude                                            | preset
+--continue           | Pick up the last conversation         | --continue                                        | flag
+--resume             | Resume a specific session by ID       | --resume                                          | flag
+auto mode            | Skip all permission prompts           | --permission-mode auto                            | flag
+--dangerously-skip-permissions     | Bypass ALL permission checks          | --dangerously-skip-permissions          | flag
+--allow-dangerously-skip-permissions | Enable bypass as an option (not default) | --allow-dangerously-skip-permissions | flag
+--worktree           | Run in an isolated git worktree       | --worktree                                        | flag
+--tmux               | Tmux pane (requires --worktree)       | --tmux                                            | flag
+model: sonnet        | Use Sonnet (fast, balanced)           | --model sonnet                                    | flag
+model: opus          | Use Opus (most capable)               | --model opus                                      | flag
+--name               | Set a display name for the session    | --name                                            | flag
+--from-pr            | Resume a session linked to a PR       | --from-pr                                         | flag
+
+# ── Popular combos ───────────────────────────────────────────
+
+Continue + auto      | Resume last session, skip prompts     | claude --continue --permission-mode auto           | preset
+Worktree + Tmux      | Isolated branch in a new pane         | claude --worktree --tmux                          | preset
+Worktree + Tmux + Auto | Full autonomous worktree session    | claude --worktree --tmux --permission-mode auto    | preset
+Resume + Fork        | Branch off from a past session        | claude --resume --fork-session                     | preset
+Worktree + Auto      | Isolated branch, skip prompts         | claude --worktree --permission-mode auto           | preset
+
+# ── More flags ───────────────────────────────────────────────
+
+--print              | One-shot output, no interactive mode  | --print                                           | flag
+--fork-session       | Fork a resumed session into a new one | --fork-session                                    | flag
+--verbose            | Show detailed output                  | --verbose                                         | flag
+--debug              | Show debug-level logs                 | --debug                                           | flag
+model: haiku         | Use Haiku (fastest, cheapest)         | --model haiku                                     | flag
+--add-dir            | Add extra directories for tool access | --add-dir                                         | flag
+--system-prompt      | System prompt to use for the session  | --system-prompt                                   | flag
+--append-system-prompt | Append to the default system prompt | --append-system-prompt                            | flag
+--mcp-config         | Load MCP servers from JSON config     | --mcp-config                                      | flag
+--max-budget-usd     | Max dollar spend on API calls         | --max-budget-usd                                  | flag
+--agent              | Agent for the current session          | --agent                                           | flag
+
+# ── Permission modes ─────────────────────────────────────────
+
+plan mode            | Require plan approval before changes  | --permission-mode plan                            | flag
+accept edits         | Auto-approve file edits only          | --permission-mode acceptEdits                     | flag
+don't ask            | Never prompt, run everything          | --permission-mode dontAsk                         | flag
+bypass permissions   | Skip all safety checks entirely       | --permission-mode bypassPermissions               | flag
+
+# ── Effort levels ────────────────────────────────────────────
+
+effort: high         | More thorough reasoning               | --effort high                                     | flag
+effort: max          | Maximum reasoning depth               | --effort max                                      | flag
+effort: medium       | Balanced speed/quality                | --effort medium                                   | flag
+effort: low          | Quick, minimal reasoning              | --effort low                                      | flag
+
+# ── Print mode combos ────────────────────────────────────────
+
+Print as JSON        | One-shot output as JSON object        | claude --print --output-format json                | preset
+Print as stream      | One-shot output as streaming JSON     | claude --print --output-format stream-json         | preset
+Debug + Verbose      | Full diagnostic output                | claude --debug --verbose                          | preset
+
+# ── Output formats (for --print mode) ────────────────────────
+
+output: json         | Structured JSON response              | --output-format json                              | flag
+output: stream-json  | Real-time streaming JSON chunks       | --output-format stream-json                       | flag
+output: text         | Plain text (default)                  | --output-format text                              | flag
+
+# ── Advanced / less common ───────────────────────────────────
+
+--bare               | Minimal mode, skip hooks and LSP      | --bare                                            | flag
+--ide                | Auto-connect to IDE on startup        | --ide                                             | flag
+--chrome             | Enable Claude in Chrome integration   | --chrome                                          | flag
+--fallback-model     | Fallback model when default overloaded| --fallback-model                                  | flag
+--json-schema        | JSON schema for structured output     | --json-schema                                     | flag
+--tools              | Specify available tools from built-in | --tools                                           | flag
+--allowedTools       | Allow specific tools only             | --allowedTools                                    | flag
+--disallowedTools    | Deny specific tools                   | --disallowedTools                                 | flag
+--settings           | Load settings from JSON file          | --settings                                        | flag
+--plugin-dir         | Load plugins from a directory         | --plugin-dir                                      | flag
+--agents             | Define custom agents via JSON         | --agents                                          | flag
+--debug-file         | Write debug logs to a file            | --debug-file                                      | flag
+--session-id         | Use a specific session UUID           | --session-id                                      | flag
+--input-format       | Input format for --print mode         | --input-format                                    | flag
+--file               | File resources to download at startup | --file                                            | flag
+--betas              | Beta headers for API requests         | --betas                                           | flag
+
+# ── Rarely needed ────────────────────────────────────────────
+
+--brief              | Enable SendUserMessage tool           | --brief                                           | flag
+--no-chrome          | Disable Chrome integration            | --no-chrome                                       | flag
+--no-session-persistence | Don't save sessions to disk       | --no-session-persistence                          | flag
+--disable-slash-commands | Disable all skills                | --disable-slash-commands                          | flag
+--strict-mcp-config  | Only use MCP from --mcp-config        | --strict-mcp-config                               | flag
+--setting-sources    | Choose which setting sources to load  | --setting-sources                                 | flag
+--include-partial-messages | Include partial chunks (streaming) | --include-partial-messages                      | flag
+--include-hook-events | Include hook events in output        | --include-hook-events                             | flag
+--replay-user-messages | Re-emit user messages on stdout     | --replay-user-messages                            | flag
+--remote-control-session-name-prefix | Prefix for Remote Control sessions | --remote-control-session-name-prefix | flag
+--mcp-debug          | [DEPRECATED] Use --debug instead      | --mcp-debug                                       | flag
+--version            | Output the version number             | --version                                         | flag
+--help               | Display help for command              | --help                                            | flag
