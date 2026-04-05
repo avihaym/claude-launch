@@ -35,6 +35,22 @@ Tab-select multiple flags:
 - Bash 4+, Zsh, or Fish
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI installed
 
+### Install fzf
+
+```bash
+# macOS
+brew install fzf
+
+# Ubuntu / Debian
+sudo apt install fzf
+
+# Arch
+sudo pacman -S fzf
+
+# Other
+git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install
+```
+
 ## Installation
 
 ### Quick install
