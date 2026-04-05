@@ -80,19 +80,6 @@ source /path/to/claude-launch/integrations/claude-launch.bash
 source /path/to/claude-launch/integrations/claude-launch.fish
 ```
 
-### Plugin managers
-
-**zinit:**
-```zsh
-zinit light avihaym/claude-launch
-```
-
-**Oh My Zsh:**
-```bash
-git clone https://github.com/avihaym/claude-launch.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/claude-launch
-# Add to plugins in .zshrc:
-plugins=(... claude-launch)
-```
 
 ## Usage
 
@@ -105,10 +92,6 @@ cc --execute    # Pick and run immediately
 cc --copy       # Pick and copy to clipboard
 cc --help       # Show help
 ```
-
-### Keyboard shortcut
-
-**Bash/Fish**: `Ctrl+G` opens the picker directly (configured by the integration).
 
 ### Multi-select
 
@@ -148,6 +131,22 @@ export CLAUDE_LAUNCH_USER_COMMANDS="/path/to/my/overrides.txt"
 ### Change the alias name
 
 The integrations define `cc` as the function name. To change it, edit the integration file for your shell and rename the function.
+
+## Keeping commands up to date
+
+Claude Code adds new flags with each update. Run the sync script to check for new or removed flags:
+
+```bash
+./scripts/sync-flags.sh
+```
+
+To auto-append new flags with placeholder descriptions:
+
+```bash
+./scripts/sync-flags.sh --add
+```
+
+Then review `commands.txt` and update the descriptions.
 
 ## Standalone usage (no shell integration)
 
