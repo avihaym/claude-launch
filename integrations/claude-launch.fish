@@ -5,15 +5,7 @@
 set -g _claude_launch_dir (realpath (status dirname)/..)
 
 function cc --description "Fuzzy launcher for Claude Code"
-    set -l tmp (mktemp)
-    "$_claude_launch_dir"/bin/claude-launch --output "$tmp" $argv
-    or begin; rm -f "$tmp"; return 0; end
-
-    set -l cmd (cat "$tmp")
-    rm -f "$tmp"
-    if test -n "$cmd"
-        commandline --replace "$cmd"
-    end
+    "$_claude_launch_dir"/bin/claude-launch --execute $argv
 end
 
 function _claude_launch_widget

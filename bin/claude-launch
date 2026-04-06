@@ -80,6 +80,18 @@ build_command() {
     cmd="$(trim "$raw_cmd")"
     type="$(trim "$raw_type")"
 
+    if [[ "$cmd" == *"{}"* ]]; then
+      local flag_name="${cmd%% *}"
+      printf "  %s: " "$flag_name" >&2
+      local arg_value
+      read -r arg_value </dev/tty || arg_value=""
+      if [[ -z "$arg_value" ]]; then
+        echo "  (skipped)" >&2
+        continue
+      fi
+      cmd="${cmd//\{\}/\"$arg_value\"}"
+    fi
+
     if [[ "$type" == "preset" ]]; then
       if [[ "$has_preset" == true ]]; then
         echo "Warning: multiple presets selected, using first one" >&2

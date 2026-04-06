@@ -5,15 +5,7 @@
 _claude_launch_dir="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")/.." && pwd)"
 
 cc() {
-  local tmp="$(mktemp)"
-  "$_claude_launch_dir/bin/claude-launch" --output "$tmp" "$@" || { rm -f "$tmp"; return 0; }
-  local cmd="$(cat "$tmp")"
-  rm -f "$tmp"
-  if [[ -n "$cmd" ]]; then
-    history -s "$cmd"
-    echo "→ $cmd"
-    echo "(Press Up arrow to load, then Enter to run)"
-  fi
+  "$_claude_launch_dir/bin/claude-launch" --execute "$@"
 }
 
 _claude_launch_widget() {

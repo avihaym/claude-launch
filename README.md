@@ -12,7 +12,7 @@ Type `cc` and get an interactive fuzzy picker with all Claude Code flags:
 
 - **Presets** — common flag combos, ready to run
 - **Flags** — Tab to multi-select, compose your own command
-- Selected command lands on your prompt for review before execution
+- Selected command executes immediately
 
 ```
 $ cc
@@ -72,9 +72,8 @@ source /path/to/claude-launch/integrations/claude-launch.fish
 ### Interactive picker
 
 ```bash
-cc              # Pick command → lands on your prompt (edit before running)
+cc              # Pick command → execute immediately
 cc resume       # Pre-filter picker with "resume"
-cc --execute    # Pick and run immediately
 cc --copy       # Pick and copy to clipboard
 cc --help       # Show help
 ```

@@ -17,8 +17,8 @@ auto mode            | Skip all permission prompts           | --permission-mode
 --tmux               | Tmux pane (requires --worktree)       | --tmux                                            | flag
 model: sonnet        | Use Sonnet (fast, balanced)           | --model sonnet                                    | flag
 model: opus          | Use Opus (most capable)               | --model opus                                      | flag
---name               | Set a display name for the session    | --name                                            | flag
---from-pr            | Resume a session linked to a PR       | --from-pr                                         | flag
+--name               | Set a display name for the session    | --name {}                                         | flag
+--from-pr            | Resume a session linked to a PR       | --from-pr {}                                      | flag
 
 # ── Popular combos ───────────────────────────────────────────
 
@@ -35,12 +35,12 @@ Worktree + Auto      | Isolated branch, skip prompts         | claude --worktree
 --verbose            | Show detailed output                  | --verbose                                         | flag
 --debug              | Show debug-level logs                 | --debug                                           | flag
 model: haiku         | Use Haiku (fastest, cheapest)         | --model haiku                                     | flag
---add-dir            | Add extra directories for tool access | --add-dir                                         | flag
---system-prompt      | System prompt to use for the session  | --system-prompt                                   | flag
---append-system-prompt | Append to the default system prompt | --append-system-prompt                            | flag
---mcp-config         | Load MCP servers from JSON config     | --mcp-config                                      | flag
---max-budget-usd     | Max dollar spend on API calls         | --max-budget-usd                                  | flag
---agent              | Agent for the current session          | --agent                                           | flag
+--add-dir            | Add extra directories for tool access | --add-dir {}                                      | flag
+--system-prompt      | System prompt to use for the session  | --system-prompt {}                                | flag
+--append-system-prompt | Append to the default system prompt | --append-system-prompt {}                         | flag
+--mcp-config         | Load MCP servers from JSON config     | --mcp-config {}                                   | flag
+--max-budget-usd     | Max dollar spend on API calls         | --max-budget-usd {}                               | flag
+--agent              | Agent for the current session          | --agent {}                                        | flag
 
 # ── Permission modes ─────────────────────────────────────────
 
@@ -73,19 +73,19 @@ output: text         | Plain text (default)                  | --output-format t
 --bare               | Minimal mode, skip hooks and LSP      | --bare                                            | flag
 --ide                | Auto-connect to IDE on startup        | --ide                                             | flag
 --chrome             | Enable Claude in Chrome integration   | --chrome                                          | flag
---fallback-model     | Fallback model when default overloaded| --fallback-model                                  | flag
---json-schema        | JSON schema for structured output     | --json-schema                                     | flag
---tools              | Specify available tools from built-in | --tools                                           | flag
---allowedTools       | Allow specific tools only             | --allowedTools                                    | flag
---disallowedTools    | Deny specific tools                   | --disallowedTools                                 | flag
---settings           | Load settings from JSON file          | --settings                                        | flag
---plugin-dir         | Load plugins from a directory         | --plugin-dir                                      | flag
---agents             | Define custom agents via JSON         | --agents                                          | flag
---debug-file         | Write debug logs to a file            | --debug-file                                      | flag
---session-id         | Use a specific session UUID           | --session-id                                      | flag
---input-format       | Input format for --print mode         | --input-format                                    | flag
---file               | File resources to download at startup | --file                                            | flag
---betas              | Beta headers for API requests         | --betas                                           | flag
+--fallback-model     | Fallback model when default overloaded| --fallback-model {}                               | flag
+--json-schema        | JSON schema for structured output     | --json-schema {}                                  | flag
+--tools              | Specify available tools from built-in | --tools {}                                        | flag
+--allowedTools       | Allow specific tools only             | --allowedTools {}                                 | flag
+--disallowedTools    | Deny specific tools                   | --disallowedTools {}                              | flag
+--settings           | Load settings from JSON file          | --settings {}                                     | flag
+--plugin-dir         | Load plugins from a directory         | --plugin-dir {}                                   | flag
+--agents             | Define custom agents via JSON         | --agents {}                                       | flag
+--debug-file         | Write debug logs to a file            | --debug-file {}                                   | flag
+--session-id         | Use a specific session UUID           | --session-id {}                                   | flag
+--input-format       | Input format for --print mode         | --input-format {}                                 | flag
+--file               | File resources to download at startup | --file {}                                         | flag
+--betas              | Beta headers for API requests         | --betas {}                                        | flag
 
 # ── Rarely needed ────────────────────────────────────────────
 
@@ -94,11 +94,11 @@ output: text         | Plain text (default)                  | --output-format t
 --no-session-persistence | Don't save sessions to disk       | --no-session-persistence                          | flag
 --disable-slash-commands | Disable all skills                | --disable-slash-commands                          | flag
 --strict-mcp-config  | Only use MCP from --mcp-config        | --strict-mcp-config                               | flag
---setting-sources    | Choose which setting sources to load  | --setting-sources                                 | flag
+--setting-sources    | Choose which setting sources to load  | --setting-sources {}                              | flag
 --include-partial-messages | Include partial chunks (streaming) | --include-partial-messages                      | flag
 --include-hook-events | Include hook events in output        | --include-hook-events                             | flag
 --replay-user-messages | Re-emit user messages on stdout     | --replay-user-messages                            | flag
---remote-control-session-name-prefix | Prefix for Remote Control sessions | --remote-control-session-name-prefix | flag
+--remote-control-session-name-prefix | Prefix for Remote Control sessions | --remote-control-session-name-prefix {} | flag
 --mcp-debug          | [DEPRECATED] Use --debug instead      | --mcp-debug                                       | flag
 --version            | Output the version number             | --version                                         | flag
 --help               | Display help for command              | --help                                            | flag
