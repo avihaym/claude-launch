@@ -31,25 +31,9 @@ Tab-select multiple flags:
 
 ## Requirements
 
-- [fzf](https://github.com/junegunn/fzf) — the fuzzy finder
+- [fzf](https://github.com/junegunn/fzf) — installed automatically by `install.sh` if missing
 - Bash 4+, Zsh, or Fish
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI installed
-
-### Install fzf
-
-```bash
-# macOS
-brew install fzf
-
-# Ubuntu / Debian
-sudo apt install fzf
-
-# Arch
-sudo pacman -S fzf
-
-# Other
-git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install
-```
 
 ## Installation
 
@@ -61,7 +45,9 @@ cd ~/.claude-launch
 ./install.sh
 ```
 
-The installer detects your shell and adds the integration automatically.
+The installer detects your shell, adds the integration, and installs fzf if needed (via your package manager or a direct binary download).
+
+Use `./install.sh --no-fzf` to skip automatic fzf installation.
 
 ### Manual install
 

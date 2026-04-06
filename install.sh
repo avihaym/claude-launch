@@ -45,6 +45,120 @@ get_integration_file() {
 }
 
 SOURCE_LINE_MARKER="# claude-launch:managed"
+FZF_FALLBACK_VERSION="0.61.1"
+SKIP_FZF=false
+
+get_fzf_os() {
+  case "$(uname -s)" in
+    Darwin) echo "darwin" ;;
+    Linux)  echo "linux" ;;
+    *)      echo "" ;;
+  esac
+}
+
+get_fzf_arch() {
+  case "$(uname -m)" in
+    x86_64)        echo "amd64" ;;
+    arm64|aarch64) echo "arm64" ;;
+    *)             echo "" ;;
+  esac
+}
+
+install_fzf_via_package_manager() {
+  if [[ "$(uname -s)" == "Darwin" ]] && command -v brew &>/dev/null; then
+    info "Installing fzf via Homebrew..."
+    brew install fzf && return 0
+  fi
+
+  if command -v apt-get &>/dev/null; then
+    info "Installing fzf via apt..."
+    sudo apt-get install -y fzf && return 0
+  elif command -v pacman &>/dev/null; then
+    info "Installing fzf via pacman..."
+    sudo pacman -S --noconfirm fzf && return 0
+  elif command -v dnf &>/dev/null; then
+    info "Installing fzf via dnf..."
+    sudo dnf install -y fzf && return 0
+  fi
+
+  return 1
+}
+
+install_fzf_binary() {
+  local os arch version url tmp_file
+  os="$(get_fzf_os)"
+  arch="$(get_fzf_arch)"
+
+  if [[ -z "$os" || -z "$arch" ]]; then
+    warn "Unsupported platform for binary download: $(uname -s) $(uname -m)"
+    return 1
+  fi
+
+  version="$(curl -sfL https://api.github.com/repos/junegunn/fzf/releases/latest \
+    | grep '"tag_name"' | head -1 | sed 's/.*"v\([^"]*\)".*/\1/' || true)"
+  version="${version:-$FZF_FALLBACK_VERSION}"
+
+  url="https://github.com/junegunn/fzf/releases/download/v${version}/fzf-${version}-${os}_${arch}.tar.gz"
+  tmp_file="$(mktemp)"
+
+  info "Downloading fzf v${version} for ${os}/${arch}..."
+  if ! curl -fSL -o "$tmp_file" "$url"; then
+    rm -f "$tmp_file"
+    warn "Download failed: $url"
+    return 1
+  fi
+
+  tar -xzf "$tmp_file" -C "$REPO_DIR/bin/" fzf
+  chmod +x "$REPO_DIR/bin/fzf"
+  rm -f "$tmp_file"
+  info "fzf v${version} installed to $REPO_DIR/bin/fzf"
+}
+
+ensure_fzf() {
+  if command -v fzf &>/dev/null; then
+    return 0
+  fi
+
+  if [[ -x "$REPO_DIR/bin/fzf" ]]; then
+    info "Using bundled fzf at $REPO_DIR/bin/fzf"
+    return 0
+  fi
+
+  if [[ "$SKIP_FZF" == "true" ]]; then
+    warn "fzf is not installed (skipped via --no-fzf)"
+    echo "  claude-launch will not work until fzf is installed."
+    echo ""
+    return 0
+  fi
+
+  echo "  fzf is required but not installed."
+  printf "  Install it now? [Y/n] "
+  read -r answer </dev/tty || answer=""
+  answer="${answer:-Y}"
+
+  if [[ ! "$answer" =~ ^[Yy] ]]; then
+    warn "Skipping fzf installation"
+    echo "  claude-launch will not work until fzf is installed."
+    echo ""
+    return 0
+  fi
+
+  if install_fzf_via_package_manager 2>/dev/null; then
+    info "fzf installed successfully"
+    return 0
+  fi
+
+  if install_fzf_binary; then
+    return 0
+  fi
+
+  warn "Could not install fzf automatically"
+  echo "  Install it manually:"
+  echo "    macOS:  brew install fzf"
+  echo "    Linux:  sudo apt install fzf"
+  echo "    Other:  https://github.com/junegunn/fzf#installation"
+  echo ""
+}
 
 install() {
   echo ""
@@ -52,14 +166,7 @@ install() {
   echo "  ─────────────────────────"
   echo ""
 
-  if ! command -v fzf &>/dev/null; then
-    warn "fzf is not installed (required dependency)"
-    echo "  Install it first:"
-    echo "    macOS:  brew install fzf"
-    echo "    Linux:  sudo apt install fzf"
-    echo "    Other:  https://github.com/junegunn/fzf#installation"
-    echo ""
-  fi
+  ensure_fzf
 
   chmod +x "$REPO_DIR/bin/$BIN_NAME"
   info "Made bin/$BIN_NAME executable"
@@ -134,15 +241,24 @@ uninstall() {
     info "No source line found in $rc_file"
   fi
 
+  if [[ -f "$REPO_DIR/bin/fzf" ]]; then
+    rm "$REPO_DIR/bin/fzf"
+    info "Removed bundled fzf binary"
+  fi
+
   echo ""
   info "Uninstalled. You can delete this folder to fully remove claude-launch."
   echo ""
 }
 
-case "${1:-}" in
-  --uninstall|-u) uninstall ;;
-  --help|-h)
-    echo "Usage: ./install.sh [--uninstall]"
-    ;;
-  *) install ;;
-esac
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --uninstall|-u) uninstall; exit ;;
+    --no-fzf)       SKIP_FZF=true ;;
+    --help|-h)      echo "Usage: ./install.sh [--uninstall] [--no-fzf]"; exit 0 ;;
+    *)              echo "Unknown option: $1" >&2; exit 1 ;;
+  esac
+  shift
+done
+
+install

@@ -39,9 +39,14 @@ trim() {
 
 check_fzf() {
   if ! command -v fzf &>/dev/null; then
+    if [[ -x "$SCRIPT_DIR/fzf" ]]; then
+      export PATH="$SCRIPT_DIR:$PATH"
+      return 0
+    fi
     echo "claude-launch requires fzf but it's not installed." >&2
     echo "" >&2
     echo "Install it:" >&2
+    echo "  Run ./install.sh again, or:" >&2
     echo "  macOS:   brew install fzf" >&2
     echo "  Linux:   sudo apt install fzf  (or your package manager)" >&2
     echo "  Other:   https://github.com/junegunn/fzf#installation" >&2
