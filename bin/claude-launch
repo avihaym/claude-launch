@@ -37,10 +37,12 @@ trim() {
   echo "$var"
 }
 
+FZF_CMD="fzf"
+
 check_fzf() {
   if ! command -v fzf &>/dev/null; then
     if [[ -x "$SCRIPT_DIR/fzf" ]]; then
-      export PATH="$SCRIPT_DIR:$PATH"
+      FZF_CMD="$SCRIPT_DIR/fzf"
       return 0
     fi
     echo "claude-launch requires fzf but it's not installed." >&2
@@ -89,7 +91,9 @@ build_command() {
         echo "  (skipped)" >&2
         continue
       fi
-      cmd="${cmd//\{\}/\"$arg_value\"}"
+      local escaped_value
+      printf -v escaped_value '%q' "$arg_value"
+      cmd="${cmd//\{\}/$escaped_value}"
     fi
 
     if [[ "$type" == "preset" ]]; then
@@ -172,7 +176,7 @@ main() {
   fi
 
   local selections
-  selections="$(echo "$all_commands" | fzf \
+  selections="$(echo "$all_commands" | "$FZF_CMD" \
     --multi \
     --ansi \
     --reverse \

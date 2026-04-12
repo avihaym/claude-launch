@@ -9,10 +9,12 @@ cc() {
 }
 
 _claude_launch_widget() {
-  local tmp="$(mktemp)"
-  "$_claude_launch_dir/bin/claude-launch" --output "$tmp" || { rm -f "$tmp"; return; }
-  READLINE_LINE="$(cat "$tmp")"
-  READLINE_POINT=${#READLINE_LINE}
+  local tmp
+  tmp="$(mktemp)" || return
+  if "$_claude_launch_dir/bin/claude-launch" --output "$tmp"; then
+    READLINE_LINE="$(cat "$tmp")"
+    READLINE_POINT=${#READLINE_LINE}
+  fi
   rm -f "$tmp"
 }
 
