@@ -47,7 +47,10 @@ cd ~/.claude-launch
 
 The installer detects your shell, adds the integration, and installs fzf if needed (via your package manager or a direct binary download).
 
-Use `./install.sh --no-fzf` to skip automatic fzf installation.
+Installer flags:
+- `--no-fzf` — skip automatic fzf installation
+- `--no-accounts` — skip the multi-account setup wizard
+- `--uninstall` / `-u` — remove the integration from your shell rc
 
 ### Manual install
 
