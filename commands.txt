@@ -102,3 +102,7 @@ output: text         | Plain text (default)                  | --output-format t
 --mcp-debug          | [DEPRECATED] Use --debug instead      | --mcp-debug                                       | flag
 --version            | Output the version number             | --version                                         | flag
 --help               | Display help for command              | --help                                            | flag
+
+# ── New flags (added by sync-flags.sh) ────────────────────
+
+--exclude-dynamic-system-prompt-sections | Move per-machine sections (cwd, env i... | --exclude-dynamic-system-prompt-sections           | flag

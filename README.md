@@ -117,6 +117,56 @@ export CLAUDE_LAUNCH_USER_COMMANDS="/path/to/my/overrides.txt"
 
 The integrations define `cc` as the function name. To change it, edit the integration file for your shell and rename the function.
 
+## Multiple accounts
+
+Each Claude Code account (work, personal, client, …) lives under its own config directory via the `CLAUDE_CONFIG_DIR` environment variable — credentials, sessions, and settings are fully isolated per directory. `claude-launch` auto-generates a `cc<name>` shell alias for each account you configure.
+
+### Set up at install time
+
+Run `./install.sh` and answer **yes** to the *Set up multiple Claude accounts?* prompt. The wizard creates each config dir, runs `claude auth login` for each, and writes the entries to `~/.claude-launch-accounts`.
+
+### Add an account later
+
+```bash
+./scripts/new-account.sh work
+# default path: $HOME/.claude-work
+# or: ./scripts/new-account.sh work /custom/path
+```
+
+This creates the dir, runs `claude auth login` with `CLAUDE_CONFIG_DIR` set, appends the entry, and prints a reminder to re-source your shell rc.
+
+### How aliases work
+
+After setup, each line in `~/.claude-launch-accounts`:
+
+```
+work=$HOME/.claude-work
+personal=$HOME/.claude-personal
+```
+
+becomes a shell function on next shell start:
+
+```bash
+cc           # default — uses ~/.claude/
+ccwork       # CLAUDE_CONFIG_DIR=$HOME/.claude-work cc "$@"
+ccpersonal   # CLAUDE_CONFIG_DIR=$HOME/.claude-personal cc "$@"
+```
+
+Account names must be valid shell identifiers (`[A-Za-z_][A-Za-z0-9_]*`). Invalid lines are skipped with a warning at shell start; the rest still load.
+
+Override the file location with `CLAUDE_LAUNCH_ACCOUNTS=/path/to/file`.
+
+### Manual setup
+
+If you prefer to do it by hand:
+
+```bash
+mkdir -p $HOME/.claude-work
+CLAUDE_CONFIG_DIR=$HOME/.claude-work claude auth login
+echo 'work=$HOME/.claude-work' >> ~/.claude-launch-accounts
+source ~/.zshrc   # or ~/.bashrc / restart fish
+```
+
 ## Keeping commands up to date
 
 Claude Code adds new flags with each update. Run the sync script to check for new or removed flags:

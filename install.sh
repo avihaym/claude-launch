@@ -4,6 +4,9 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_NAME="claude-launch"
 
+# shellcheck source=scripts/_account-helpers.sh
+source "$REPO_DIR/scripts/_account-helpers.sh"
+
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
@@ -60,6 +63,7 @@ SOURCE_LINE_MARKER="# claude-launch:managed"
 FZF_FALLBACK_VERSION="0.61.1"
 SKIP_FZF=false
 SKIP_CHECKSUM=false
+SKIP_ACCOUNTS=false
 
 get_fzf_os() {
   case "$(uname -s)" in
@@ -211,6 +215,101 @@ ensure_fzf() {
   echo ""
 }
 
+PROMPTED_NAME=""
+prompt_account_name() {
+  local index="$1" name
+  PROMPTED_NAME=""
+  while true; do
+    printf "    Account #%d — alias suffix (alias will be cc<suffix>, e.g. \"work\" → ccwork): " "$index"
+    read -r name </dev/tty || return 1
+    if [[ -z "$name" ]]; then
+      warn "Suffix cannot be empty"
+      continue
+    fi
+    if [[ "$name" == cc* && ${#name} -gt 2 ]]; then
+      warn "Stripping leading 'cc' so your alias is cc${name#cc}, not cc${name}"
+      name="${name#cc}"
+    fi
+    if ! validate_account_name "$name"; then
+      warn "Invalid suffix '$name' — must match $ACCOUNT_NAME_REGEX"
+      continue
+    fi
+    if account_exists "$name"; then
+      warn "Account '$name' already exists in $(accounts_file_path)"
+      continue
+    fi
+    info "→ Alias will be: cc${name}"
+    PROMPTED_NAME="$name"
+    return 0
+  done
+}
+
+setup_accounts() {
+  if [[ "$SKIP_ACCOUNTS" == "true" ]]; then
+    return 0
+  fi
+
+  echo ""
+  printf "  Set up multiple Claude accounts? [y/N] "
+  local answer
+  read -r answer </dev/tty || answer=""
+  if [[ ! "$answer" =~ ^[Yy] ]]; then
+    return 0
+  fi
+
+  echo ""
+  echo "  Each account gets its own CLAUDE_CONFIG_DIR (credentials, sessions, settings)."
+  echo "  Aliases will be created as cc<name>, e.g. ccwork, ccpersonal."
+  echo ""
+
+  local count=0 name path login_answer added=()
+  while true; do
+    count=$((count + 1))
+    prompt_account_name "$count" || return 0
+    name="$PROMPTED_NAME"
+
+    local default_path
+    default_path="$(default_account_path "$name")"
+    printf "    Config dir [%s]: " "$default_path"
+    read -r path </dev/tty || path=""
+    path="${path:-$default_path}"
+    if [[ "$path" != /* && "$path" != ~* && "$path" != \$* ]]; then
+      warn "Config dir must be an absolute path; got '$path'"
+      continue
+    fi
+    eval "path=\"$path\""
+
+    mkdir -p "$path"
+    append_account "$name" "$path"
+    added+=("$name")
+    info "Wrote $name=$path"
+
+    printf "    Run 'claude auth login' for this account now? [Y/n] "
+    read -r login_answer </dev/tty || login_answer=""
+    login_answer="${login_answer:-Y}"
+    if [[ "$login_answer" =~ ^[Yy] ]]; then
+      if command -v claude &>/dev/null; then
+        CLAUDE_CONFIG_DIR="$path" claude auth login || warn "Login did not complete; you can retry later with: CLAUDE_CONFIG_DIR=$path claude auth login"
+      else
+        warn "claude CLI not found in PATH — skipping login. Run later: CLAUDE_CONFIG_DIR=$path claude auth login"
+      fi
+    fi
+
+    echo ""
+    printf "  Add another account? [y/N] "
+    read -r answer </dev/tty || answer=""
+    [[ "$answer" =~ ^[Yy] ]] || break
+    echo ""
+  done
+
+  echo ""
+  info "Configured ${#added[@]} account(s): ${added[*]}"
+  echo "  Aliases will be available after restarting your shell:"
+  for n in "${added[@]}"; do
+    echo "    cc${n}"
+  done
+}
+
 install() {
   echo ""
   echo "  claude-launch installer"
@@ -246,6 +345,8 @@ install() {
     echo "$source_line" >> "$rc_file"
     info "Added source line to $rc_file"
   fi
+
+  setup_accounts
 
   echo ""
   info "Installation complete!"
@@ -306,8 +407,9 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --uninstall|-u)         uninstall; exit ;;
     --no-fzf)               SKIP_FZF=true ;;
+    --no-accounts)          SKIP_ACCOUNTS=true ;;
     --skip-checksum-verify) SKIP_CHECKSUM=true ;;
-    --help|-h)              echo "Usage: ./install.sh [--uninstall] [--no-fzf] [--skip-checksum-verify]"; exit 0 ;;
+    --help|-h)              echo "Usage: ./install.sh [--uninstall] [--no-fzf] [--no-accounts] [--skip-checksum-verify]"; exit 0 ;;
     *)                      echo "Unknown option: $1" >&2; exit 1 ;;
   esac
   shift
